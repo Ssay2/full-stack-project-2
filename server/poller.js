@@ -1,5 +1,6 @@
 const { fetchPrices } = require('./coingecko');
 const { addPoint } = require('./priceStore');
+const { checkAlerts } = require('./alerts');
 
 const MAX_BACKOFF_MS = 5 * 60 * 1000;
 
@@ -45,6 +46,7 @@ function startPoller(io, { intervalMs = 20000 } = {}) {
 
         addPoint(coin, point);
         io.to(`coin:${coin}`).emit('price', { coin, ...point });
+        checkAlerts(io, coin, point.price);
       }
 
       console.log(`Fetched prices for ${activeCoins.join(', ')}`);

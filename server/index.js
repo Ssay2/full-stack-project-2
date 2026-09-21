@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const { startPoller } = require('./poller');
 const { getHistory } = require('./priceStore');
 const { ALLOWED_COINS, isAllowed } = require('./coins');
+const { addAlert, removeSocketAlerts } = require('./alerts');
 
 const PORT = process.env.PORT || 4000;
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS) || 20000;
@@ -30,6 +31,21 @@ app.get('/coins', (req, res) => {
   res.json(ALLOWED_COINS);
 });
 
+// Counts current subscribers per coin room, for the live viewer count feature.
+function getViewerCounts() {
+  const counts = {};
+  for (const room of io.sockets.adapter.rooms.keys()) {
+    if (room.startsWith('coin:')) {
+      counts[room.slice('coin:'.length)] = io.sockets.adapter.rooms.get(room).size;
+    }
+  }
+  return counts;
+}
+
+function broadcastViewerCounts() {
+  io.emit('viewerCounts', getViewerCounts());
+}
+
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -41,14 +57,26 @@ io.on('connection', (socket) => {
 
     socket.join(`coin:${coinId}`);
     socket.emit('history', { [coinId]: getHistory(coinId) });
+    broadcastViewerCounts();
   });
 
   socket.on('unsubscribe', (coinId) => {
     socket.leave(`coin:${coinId}`);
+    broadcastViewerCounts();
+  });
+
+  socket.on('setAlert', ({ coin, direction, price } = {}) => {
+    if (!isAllowed(coin)) return;
+    if (direction !== 'above' && direction !== 'below') return;
+    if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) return;
+
+    addAlert(socket.id, { coin, direction, price });
   });
 
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
+    removeSocketAlerts(socket.id);
+    broadcastViewerCounts();
   });
 });
 

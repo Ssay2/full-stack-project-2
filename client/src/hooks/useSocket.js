@@ -30,6 +30,8 @@ export function useSocket() {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [serverStatus, setServerStatus] = useState(null);
   const [watchlist, setWatchlist] = useState(loadWatchlist);
+  const [viewerCounts, setViewerCounts] = useState({});
+  const [alerts, setAlerts] = useState([]);
   const socketRef = useRef(null);
   const watchlistRef = useRef(watchlist);
   watchlistRef.current = watchlist;
@@ -52,6 +54,12 @@ export function useSocket() {
     socket.io.on('reconnect_attempt', () => setConnectionStatus('reconnecting'));
 
     socket.on('status', (payload) => setServerStatus(payload));
+    socket.on('viewerCounts', (payload) => setViewerCounts(payload));
+
+    socket.on('alert', (payload) => {
+      const id = `${payload.coin}-${Date.now()}`;
+      setAlerts((prev) => [...prev, { id, ...payload }]);
+    });
 
     socket.on('history', (payload) => {
       setHistory((prev) => ({ ...prev, ...payload }));
@@ -106,6 +114,14 @@ export function useSocket() {
     });
   }
 
+  function setAlert(coin, direction, price) {
+    socketRef.current?.emit('setAlert', { coin, direction, price });
+  }
+
+  function dismissAlert(id) {
+    setAlerts((prev) => prev.filter((alert) => alert.id !== id));
+  }
+
   return {
     history,
     latest,
@@ -113,7 +129,11 @@ export function useSocket() {
     serverStatus,
     coinIds: watchlist,
     addCoin,
-    removeCoin
+    removeCoin,
+    viewerCounts,
+    alerts,
+    setAlert,
+    dismissAlert
   };
 }
 
