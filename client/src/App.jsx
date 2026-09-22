@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useSocket } from './hooks/useSocket';
 import { PriceCard } from './components/PriceCard';
 import { PriceChart } from './components/PriceChart';
@@ -59,6 +60,7 @@ function App() {
       )}
 
       <Watchlist watchedIds={coinIds} onAdd={addCoin} />
+      <SpeedInsights />
     </main>
   );
 }
