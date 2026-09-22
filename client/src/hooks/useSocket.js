@@ -37,7 +37,13 @@ export function useSocket() {
   watchlistRef.current = watchlist;
 
   useEffect(() => {
-    const socket = io(SERVER_URL);
+    const socket = io(SERVER_URL, {
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 10000
+    });
     socketRef.current = socket;
 
     function subscribeAll() {
@@ -50,8 +56,9 @@ export function useSocket() {
       setConnectionStatus('connected');
       subscribeAll();
     });
-    socket.on('disconnect', () => setConnectionStatus('disconnected'));
+    socket.on('disconnect', () => setConnectionStatus('reconnecting'));
     socket.io.on('reconnect_attempt', () => setConnectionStatus('reconnecting'));
+    socket.on('connect_error', () => setConnectionStatus('reconnecting'));
 
     socket.on('status', (payload) => setServerStatus(payload));
     socket.on('viewerCounts', (payload) => setViewerCounts(payload));
