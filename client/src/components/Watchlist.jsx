@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://crypto-dashboard-api.onrender.com';
 
 export function Watchlist({ watchedIds, onAdd }) {
   const [allCoins, setAllCoins] = useState([]);
@@ -17,7 +17,8 @@ export function Watchlist({ watchedIds, onAdd }) {
 
   useEffect(() => {
     if (available.length > 0 && !available.some((coin) => coin.id === selected)) {
-      setSelected(available[0].id);
+      const firstAvailableId = available[0].id;
+      setSelected(firstAvailableId);
     }
   }, [available, selected]);
 

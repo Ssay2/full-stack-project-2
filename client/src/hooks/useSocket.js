@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
 const MAX_POINTS = 50;
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://crypto-dashboard-api.onrender.com';
 const STORAGE_KEY = 'watchlist';
 const DEFAULT_WATCHLIST = ['bitcoin', 'ethereum', 'solana'];
 
